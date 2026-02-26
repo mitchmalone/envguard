@@ -4,6 +4,7 @@ export interface ExecOptions {
   timeout?: number;
   cwd?: string;
   env?: Record<string, string | undefined>;
+  stdin?: string;
 }
 
 export interface ExecResult {
@@ -22,7 +23,7 @@ export function execCommand(
   options?: ExecOptions,
 ): Promise<ExecResult> {
   return new Promise((resolve) => {
-    execFile(
+    const child = execFile(
       command,
       args,
       {
@@ -52,6 +53,12 @@ export function execCommand(
         resolve({ stdout: stdout ?? '', stderr: stderr ?? '', exitCode: 0 });
       },
     );
+
+    // Pipe stdin if provided (used by providers that read values from stdin)
+    if (options?.stdin !== undefined && child.stdin) {
+      child.stdin.write(options.stdin);
+      child.stdin.end();
+    }
   });
 }
 

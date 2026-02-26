@@ -38,6 +38,21 @@ describe('execCommand', () => {
     // /tmp might resolve to /private/tmp on macOS
     expect(result.stdout.trim()).toMatch(/\/tmp$/);
   });
+
+  it('supports stdin option', async () => {
+    const result = await execCommand(
+      'node',
+      [
+        '-e',
+        'let d="";process.stdin.on("data",c=>d+=c);process.stdin.on("end",()=>process.stdout.write(d))',
+      ],
+      {
+        stdin: 'hello from stdin',
+      },
+    );
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe('hello from stdin');
+  });
 });
 
 describe('commandExists', () => {
