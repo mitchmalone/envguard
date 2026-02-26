@@ -46,6 +46,20 @@ export interface EnvFile {
 
 // ── Check / Diff Results ────────────────────────────────────────────────────
 
+export interface RemoteKeyInfo {
+  provider: ProviderName;
+  target: string;
+  keys: string[];
+}
+
+export interface ProviderStatus {
+  provider: ProviderName;
+  displayName: string;
+  available: boolean;
+  error?: string;
+  fix?: string;
+}
+
 export interface MissingSecret {
   key: string;
   source: string; // which .env file it comes from
@@ -54,7 +68,8 @@ export interface MissingSecret {
 
 export interface CheckResult {
   localSecrets: SecretEntry[];
-  remoteKeys: Record<string, string[]>; // provider → keys
+  remoteKeys: RemoteKeyInfo[];
+  providers: ProviderStatus[];
   missing: MissingSecret[];
   allSynced: boolean;
 }

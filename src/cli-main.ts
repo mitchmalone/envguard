@@ -1,5 +1,7 @@
 import { createRequire } from 'node:module';
 import { Command, CommanderError } from 'commander';
+import { checkCommand } from './commands/check.js';
+import './providers/index.js';
 import type { CliContext } from './types.js';
 import { CliError, setupEpipeHandler } from './utils/errors.js';
 
@@ -29,8 +31,14 @@ export async function runCli(ctx: CliContext): Promise<void> {
   program
     .command('check', { isDefault: true })
     .description('compare local .env keys against remote providers')
-    .action(() => {
-      ctx.stdout.write('envguard check: not yet implemented\n');
+    .action(async () => {
+      const opts = program.opts();
+      await checkCommand(ctx, {
+        json: opts.json,
+        quiet: opts.quiet,
+        verbose: opts.verbose,
+        color: opts.color,
+      });
     });
 
   program

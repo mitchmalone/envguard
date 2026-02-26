@@ -51,10 +51,13 @@ describe('CLI', () => {
     expect(ctx.output).toContain('config');
   });
 
-  it('check command (default) prints stub message', async () => {
+  it('check command (default) runs check', async () => {
     const ctx = createMockContext([]);
     await runCli(ctx);
-    expect(ctx.output).toContain('not yet implemented');
+    // No longer a stub — the check command runs and outputs results or errors
+    // With cwd=/tmp and no providers, it should write an error to stderr
+    expect(ctx.errors).toContain('No providers detected');
+    expect(ctx.exit).toHaveBeenCalledWith(2);
   });
 
   it('push command prints stub message', async () => {

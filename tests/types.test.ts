@@ -6,7 +6,9 @@ import {
   type MissingSecret,
   type PrerequisiteResult,
   type ProviderName,
+  type ProviderStatus,
   type PushResult,
+  type RemoteKeyInfo,
   type SecretEntry,
   configSchema,
   providerNameSchema,
@@ -105,15 +107,48 @@ describe('Domain types', () => {
     expect(missing.missingFrom[0].provider).toBe('github');
   });
 
+  it('RemoteKeyInfo is structurally valid', () => {
+    const info: RemoteKeyInfo = {
+      provider: 'github',
+      target: 'actions',
+      keys: ['API_KEY', 'DB_URL'],
+    };
+    expect(info.provider).toBe('github');
+    expect(info.keys).toHaveLength(2);
+  });
+
+  it('ProviderStatus is structurally valid', () => {
+    const ok: ProviderStatus = {
+      provider: 'github',
+      displayName: 'GitHub',
+      available: true,
+    };
+    expect(ok.available).toBe(true);
+    expect(ok.error).toBeUndefined();
+
+    const fail: ProviderStatus = {
+      provider: 'vercel',
+      displayName: 'Vercel',
+      available: false,
+      error: 'vercel CLI',
+      fix: 'npm i -g vercel',
+    };
+    expect(fail.available).toBe(false);
+    expect(fail.error).toBe('vercel CLI');
+  });
+
   it('CheckResult is structurally valid', () => {
     const result: CheckResult = {
       localSecrets: [{ key: 'A', value: '1', source: '.env' }],
-      remoteKeys: { github: ['A', 'B'] },
+      remoteKeys: [{ provider: 'github', target: 'actions', keys: ['A', 'B'] }],
+      providers: [{ provider: 'github', displayName: 'GitHub', available: true }],
       missing: [],
       allSynced: true,
     };
     expect(result.allSynced).toBe(true);
     expect(result.missing).toHaveLength(0);
+    expect(result.remoteKeys).toHaveLength(1);
+    expect(result.providers).toHaveLength(1);
   });
 
   it('PushResult is structurally valid', () => {
