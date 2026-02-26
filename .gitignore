@@ -1,1 +1,22 @@
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+
+# Env files (we're literally a tool for managing these — don't commit them)
+.env
+.env.local
+.env.production
+.env.staging
+.env.*.local
+
+# Agent internals
+.claude/
+PROMPT.md
+AGENT.md
+LEARNINGS.md
+FIX_PLAN.md
+
+# OS
 .DS_Store
+Thumbs.db
