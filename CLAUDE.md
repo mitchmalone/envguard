@@ -26,6 +26,7 @@ src/
 ├── commands/
 │   ├── check.ts        # Compare local vs remote secrets
 │   ├── push.ts         # Interactive push flow (Ink)
+│   ├── delete.ts       # Interactive delete flow (Ink)
 │   ├── hook.ts         # Git hook management
 │   └── config.ts       # Config management
 ├── providers/
@@ -39,6 +40,7 @@ src/
 │   └── comparator.ts   # Diff local vs remote secrets
 ├── ui/
 │   ├── PushWizard.tsx  # Ink push flow
+│   ├── DeleteWizard.tsx# Ink delete flow
 │   ├── CheckReport.tsx # Ink check output
 │   └── components/     # Shared Ink components
 ├── utils/

@@ -68,9 +68,11 @@ describe('CLI', () => {
     expect(ctx.exit).toHaveBeenCalledWith(2);
   });
 
-  it('delete command prints stub message', async () => {
+  it('delete command runs delete', async () => {
     const ctx = createMockContext(['delete']);
     await runCli(ctx);
-    expect(ctx.output).toContain('not yet implemented');
+    // With cwd=/tmp and no providers, it should write an error to stderr
+    expect(ctx.errors).toContain('No providers detected');
+    expect(ctx.exit).toHaveBeenCalledWith(2);
   });
 });

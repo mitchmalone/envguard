@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import { Command, CommanderError } from 'commander';
 import { checkCommand } from './commands/check.js';
+import { deleteCommand } from './commands/delete.js';
 import { pushCommand } from './commands/push.js';
 import './providers/index.js';
 import type { CliContext } from './types.js';
@@ -62,8 +63,26 @@ export async function runCli(ctx: CliContext): Promise<void> {
   program
     .command('delete')
     .description('delete secrets from remote providers')
-    .action(() => {
-      ctx.stdout.write('envguard delete: not yet implemented\n');
+    .option('--provider <name>', 'which provider to delete from')
+    .option('--target <target>', 'which target (e.g., "actions", "production")')
+    .option('--keys <keys>', 'comma-separated keys to delete')
+    .option('--yes', 'skip confirmation')
+    .option('--all', 'delete all local .env keys from the provider')
+    .option('--dry-run', 'show what would be deleted')
+    .action(async (cmdOpts) => {
+      const globalOpts = program.opts();
+      await deleteCommand(ctx, {
+        provider: cmdOpts.provider,
+        target: cmdOpts.target,
+        keys: cmdOpts.keys,
+        yes: cmdOpts.yes,
+        all: cmdOpts.all,
+        dryRun: cmdOpts.dryRun,
+        json: globalOpts.json,
+        quiet: globalOpts.quiet,
+        verbose: globalOpts.verbose,
+        color: globalOpts.color,
+      });
     });
 
   const hookCmd = program.command('hook').description('manage git pre-push hook');
