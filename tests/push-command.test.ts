@@ -73,6 +73,7 @@ const allSyncedResult: CheckResult = {
   ],
   providers: [{ provider: 'github', displayName: 'GitHub', available: true }],
   missing: [],
+  duplicateKeys: [],
   allSynced: true,
 };
 
@@ -109,6 +110,7 @@ const missingResult: CheckResult = {
       ],
     },
   ],
+  duplicateKeys: [],
   allSynced: false,
 };
 
@@ -173,6 +175,38 @@ describe('pushCommand', () => {
       await pushCommand(ctx, { quiet: true });
 
       expect(ctx.output).toBe('');
+    });
+  });
+
+  // ── No secrets ──────────────────────────────────────────────────────
+
+  describe('no secrets', () => {
+    it('exits 1 with helpful message when no secrets found', async () => {
+      vi.mocked(runCheck).mockResolvedValue({
+        ...allSyncedResult,
+        localSecrets: [],
+      });
+      const ctx = makeCtx();
+
+      await pushCommand(ctx, { force: true });
+
+      expect(ctx.errOutput).toContain('No secrets found');
+      expect(ctx.errOutput).toContain('.env');
+      expect(ctx.exitCode).toBe(1);
+    });
+
+    it('outputs JSON when no secrets with --json', async () => {
+      vi.mocked(runCheck).mockResolvedValue({
+        ...allSyncedResult,
+        localSecrets: [],
+      });
+      const ctx = makeCtx();
+
+      await pushCommand(ctx, { force: true, json: true });
+
+      const parsed = JSON.parse(ctx.output);
+      expect(parsed.pushed).toEqual([]);
+      expect(ctx.exitCode).toBe(1);
     });
   });
 

@@ -54,18 +54,16 @@ describe('CLI', () => {
   it('check command (default) runs check', async () => {
     const ctx = createMockContext([]);
     await runCli(ctx);
-    // No longer a stub — the check command runs and outputs results or errors
-    // With cwd=/tmp and no providers, it should write an error to stderr
-    expect(ctx.errors).toContain('No providers detected');
-    expect(ctx.exit).toHaveBeenCalledWith(2);
+    // With cwd=/tmp and no .env files, shows "no secrets found" warning
+    expect(ctx.errors).toContain('No secrets found');
   });
 
   it('push command runs push', async () => {
     const ctx = createMockContext(['push']);
     await runCli(ctx);
-    // With cwd=/tmp and no providers, it should write an error to stderr
-    expect(ctx.errors).toContain('No providers detected');
-    expect(ctx.exit).toHaveBeenCalledWith(2);
+    // With cwd=/tmp and no .env files, shows "no secrets found" error
+    expect(ctx.errors).toContain('No secrets found');
+    expect(ctx.exit).toHaveBeenCalledWith(1);
   });
 
   it('delete command runs delete', async () => {

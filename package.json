@@ -6,6 +6,7 @@
   "bin": {
     "envguard": "dist/cli.js"
   },
+  "files": ["dist/"],
   "exports": {
     ".": {
       "import": "./dist/cli-main.js",
@@ -15,6 +16,14 @@
   "engines": {
     "node": ">=20"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beebeebeeebeee/envguard.git"
+  },
+  "homepage": "https://github.com/beebeebeeebeee/envguard#readme",
+  "bugs": {
+    "url": "https://github.com/beebeebeeebeee/envguard/issues"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "check": "biome check . && tsc --noEmit && vitest run",
@@ -22,9 +31,20 @@
     "test:watch": "vitest --watch",
     "lint": "biome check .",
     "lint:fix": "biome check . --fix",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run check && pnpm run build"
   },
-  "keywords": ["env", "secrets", "cli", "environment", "guard", "sync"],
+  "keywords": [
+    "env",
+    "secrets",
+    "cli",
+    "environment",
+    "guard",
+    "sync",
+    "dotenv",
+    "github-actions",
+    "vercel",
+    "netlify"
+  ],
   "license": "MIT",
   "dependencies": {
     "commander": "^13.0.0",

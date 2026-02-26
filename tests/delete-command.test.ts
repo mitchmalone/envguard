@@ -74,6 +74,7 @@ const baseCheckResult: CheckResult = {
   ],
   providers: [{ provider: 'github', displayName: 'GitHub', available: true }],
   missing: [],
+  duplicateKeys: [],
   allSynced: true,
 };
 

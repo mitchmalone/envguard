@@ -53,7 +53,7 @@ export async function deleteCommand(ctx: CliContext, opts: DeleteCommandOptions)
   if (availableProviders.length === 0) {
     if (checkResult.providers.length === 0) {
       ctx.stderr.write(
-        `${red('Error:')} No providers detected. Add a .envguard.json config or use a project with GitHub/Vercel/Netlify.\n`,
+        `${red('Error:')} No providers detected.\n  envguard looks for .github/, vercel.json, .vercel/, netlify.toml, or .netlify/ in your project.\n  You can also specify providers in .envguard.json: { "providers": ["github", "vercel"] }\n  Run ${bold('envguard config init')} to create a config file.\n`,
       );
     } else {
       ctx.stderr.write(`${red('Error:')} All providers failed prerequisite checks:\n`);

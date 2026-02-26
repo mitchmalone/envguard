@@ -2,6 +2,7 @@ import { getProvider } from '../providers/registry.js';
 import type {
   CheckResult,
   Config,
+  DuplicateKey,
   MissingSecret,
   Provider,
   ProviderName,
@@ -11,6 +12,28 @@ import type {
 } from '../types.js';
 import { detectProviders } from './detector.js';
 import { loadSecrets } from './env-parser.js';
+
+/**
+ * Find keys that appear in multiple .env files.
+ */
+export function findDuplicateKeys(localSecrets: SecretEntry[]): DuplicateKey[] {
+  const keyToSources = new Map<string, Set<string>>();
+  for (const s of localSecrets) {
+    const sources = keyToSources.get(s.key);
+    if (sources) {
+      sources.add(s.source);
+    } else {
+      keyToSources.set(s.key, new Set([s.source]));
+    }
+  }
+  const duplicates: DuplicateKey[] = [];
+  for (const [key, sources] of keyToSources) {
+    if (sources.size > 1) {
+      duplicates.push({ key, sources: [...sources] });
+    }
+  }
+  return duplicates;
+}
 
 /**
  * Compare local secrets against remote provider keys.
@@ -106,12 +129,14 @@ export async function runCheck(projectRoot: string, config: Config | null): Prom
   }
 
   const missing = compareSecrets(localSecrets, remoteKeys);
+  const duplicateKeys = findDuplicateKeys(localSecrets);
 
   return {
     localSecrets,
     remoteKeys,
     providers,
     missing,
+    duplicateKeys,
     allSynced: missing.length === 0,
   };
 }

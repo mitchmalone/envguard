@@ -1,5 +1,9 @@
 # envguard
 
+[![CI](https://github.com/beebeebeeebeee/envguard/actions/workflows/ci.yml/badge.svg)](https://github.com/beebeebeeebeee/envguard/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/envguard.svg)](https://www.npmjs.com/package/envguard)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Guards your environment secrets. Catches missing env vars before your CI does.
 
 ## The Problem
@@ -15,6 +19,8 @@ npm install -g envguard
 # or
 npx envguard
 ```
+
+Requires Node.js 20 or later.
 
 ## Quick Start
 
@@ -33,23 +39,24 @@ envguard hook install
 
 ### `envguard check`
 
-Compares your local `.env` keys against remote providers and reports what's missing.
+Compares your local `.env` keys against remote providers and reports what's missing. This is the default command — running `envguard` with no arguments does the same thing.
 
 ```
 $ envguard check
 
   envguard · checking secrets
 
-  ✓ 12 local secrets found in .env.local
-  ✓ Detected providers: GitHub Actions, Vercel
+  ✓ 12 secrets from .env.local
+  ✓ Providers: GitHub Actions, GitHub Codespaces, Vercel
 
-  ⚠ 3 secrets missing from remote environments:
+  ⚠ 3 secrets missing from remote:
 
-    STRIPE_KEY         missing on → GitHub Actions, Vercel
-    DATABASE_URL       missing on → Vercel
-    RESEND_API_KEY     missing on → GitHub Actions
+    STRIPE_KEY      → GitHub Actions, Vercel (production)
+    DATABASE_URL    → Vercel (production)
+    RESEND_API_KEY  → GitHub Actions
 
   Run envguard push to sync them.
+  Run envguard hook install to catch missing secrets before pushing.
 ```
 
 Exits with code 1 if secrets are missing — perfect for git hooks and CI.
@@ -60,37 +67,41 @@ Interactive TUI for pushing secrets to remote providers.
 
 ```
 $ envguard push
+```
 
-  envguard · push secrets
+Non-interactive mode:
 
-  ? Select secrets to push:
-    ✓ STRIPE_KEY
-    ✓ DATABASE_URL
-    ✓ RESEND_API_KEY
+```bash
+envguard push --force        # Push all missing secrets without prompting
+envguard push --dry-run      # Show what would be pushed
+```
 
-  ? Push to:
-    ✓ GitHub Actions
-    ✓ GitHub Codespaces
-    ✓ Vercel (production, preview, development)
+### `envguard delete`
 
-  Pushing 3 secrets to 3 providers...
-  ✓ STRIPE_KEY        → GitHub Actions ✓  Codespaces ✓  Vercel ✓
-  ✓ DATABASE_URL      → Vercel ✓
-  ✓ RESEND_API_KEY    → GitHub Actions ✓
+Interactive TUI for deleting secrets from remote providers.
 
-  ✓ 3 secrets synced to 3 providers.
+```
+$ envguard delete
+```
+
+Non-interactive mode:
+
+```bash
+envguard delete --provider github --target actions --keys "KEY1,KEY2" --yes
+envguard delete --provider vercel --target production --all --yes
+envguard delete --provider github --target actions --keys "KEY1" --dry-run
 ```
 
 ### `envguard hook install`
 
-Installs a git `pre-push` hook that runs `envguard check` automatically.
+Installs a git `pre-push` hook that runs `envguard check --quiet` automatically.
 
 ```bash
 $ envguard hook install
-✓ Installed pre-push hook at .git/hooks/pre-push
+✓ Installed envguard pre-push hook at .git/hooks/pre-push
 
 $ envguard hook remove
-✓ Removed pre-push hook
+✓ Removed pre-push hook.
 ```
 
 ### `envguard config`
@@ -98,8 +109,8 @@ $ envguard hook remove
 Manage project configuration.
 
 ```bash
-$ envguard config          # Show current config
-$ envguard config init     # Create .envguard.json interactively
+envguard config          # Show current config (or auto-detected settings)
+envguard config init     # Create .envguard.json interactively
 ```
 
 ## Provider Detection
@@ -122,11 +133,13 @@ Override with `.envguard.json`:
 
 ## Env File Discovery
 
-envguard finds your env files automatically (in priority order):
+envguard finds your env files automatically:
 
-1. `.env.local`
-2. `.env`
-3. `.env.development`
+- `.env`
+- `.env.local`
+- `.env.development`
+- `.env.production`
+- `.env.staging`
 
 Or specify in config:
 
@@ -173,13 +186,13 @@ Create `.envguard.json` in your project root:
 | `ignore` | Secret names to skip | `[]` |
 | `envMapping` | Map env files to provider environments | All environments |
 
-## Flags
+## Global Flags
 
 ```
 --color auto|always|never    Control color output (respects NO_COLOR)
 --json                       Machine-readable JSON output
---quiet                      Suppress non-essential output
---verbose                    Extra debug information
+-q, --quiet                  Suppress non-essential output
+-v, --verbose                Extra debug information
 --version                    Print version
 --help                       Show help
 ```
@@ -188,9 +201,9 @@ Create `.envguard.json` in your project root:
 
 envguard uses your existing CLI tools under the hood:
 
-- **GitHub:** [GitHub CLI (`gh`)](https://cli.github.com/) — must be authenticated
-- **Vercel:** [Vercel CLI](https://vercel.com/docs/cli) — must be authenticated
-- **Netlify:** [Netlify CLI](https://docs.netlify.com/cli/get-started/) — must be authenticated
+- **GitHub:** [GitHub CLI (`gh`)](https://cli.github.com/) — must be authenticated (`gh auth login`)
+- **Vercel:** [Vercel CLI](https://vercel.com/docs/cli) — must be authenticated (`vercel login`) and project linked (`vercel link`)
+- **Netlify:** [Netlify CLI](https://docs.netlify.com/cli/get-started/) — must be authenticated (`netlify login`) and site linked (`netlify link`)
 
 envguard will tell you exactly what's missing and how to set it up.
 

@@ -66,11 +66,17 @@ export interface MissingSecret {
   missingFrom: Array<{ provider: ProviderName; target: string }>;
 }
 
+export interface DuplicateKey {
+  key: string;
+  sources: string[];
+}
+
 export interface CheckResult {
   localSecrets: SecretEntry[];
   remoteKeys: RemoteKeyInfo[];
   providers: ProviderStatus[];
   missing: MissingSecret[];
+  duplicateKeys: DuplicateKey[];
   allSynced: boolean;
 }
 

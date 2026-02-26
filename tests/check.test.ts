@@ -77,6 +77,7 @@ const allSyncedResult: CheckResult = {
     { provider: 'vercel', displayName: 'Vercel', available: true },
   ],
   missing: [],
+  duplicateKeys: [],
   allSynced: true,
 };
 
@@ -109,6 +110,7 @@ const missingResult: CheckResult = {
       ],
     },
   ],
+  duplicateKeys: [],
   allSynced: false,
 };
 
@@ -117,6 +119,7 @@ const noProvidersResult: CheckResult = {
   remoteKeys: [],
   providers: [],
   missing: [],
+  duplicateKeys: [],
   allSynced: true,
 };
 
@@ -133,7 +136,22 @@ const allProvidersFailedResult: CheckResult = {
     },
   ],
   missing: [],
+  duplicateKeys: [],
   allSynced: true,
+};
+
+const noSecretsResult: CheckResult = {
+  localSecrets: [],
+  remoteKeys: [],
+  providers: [{ provider: 'github', displayName: 'GitHub', available: true }],
+  missing: [],
+  duplicateKeys: [],
+  allSynced: true,
+};
+
+const duplicateKeysResult: CheckResult = {
+  ...allSyncedResult,
+  duplicateKeys: [{ key: 'API_KEY', sources: ['.env', '.env.local'] }],
 };
 
 describe('checkCommand', () => {
@@ -421,6 +439,84 @@ describe('checkCommand', () => {
       await checkCommand(ctx, {});
 
       expect(ctx.output).not.toContain('envguard hook install');
+    });
+  });
+
+  // ── No secrets ────────────────────────────────────────────────────────
+
+  describe('no secrets', () => {
+    it('shows warning when no secrets found', async () => {
+      vi.mocked(runCheck).mockResolvedValue(noSecretsResult);
+      const ctx = makeCtx();
+
+      await checkCommand(ctx, {});
+
+      expect(ctx.errOutput).toContain('No secrets found');
+      expect(ctx.errOutput).toContain('.env');
+      expect(ctx.exitCode).toBeNull();
+    });
+
+    it('returns JSON when no secrets found with --json', async () => {
+      vi.mocked(runCheck).mockResolvedValue(noSecretsResult);
+      const ctx = makeCtx();
+
+      await checkCommand(ctx, { json: true });
+
+      const parsed = JSON.parse(ctx.output);
+      expect(parsed.localSecrets).toHaveLength(0);
+      expect(ctx.exitCode).toBeNull();
+    });
+  });
+
+  // ── Duplicate keys ───────────────────────────────────────────────────
+
+  describe('duplicate keys', () => {
+    it('shows duplicate key warnings in verbose mode', async () => {
+      vi.mocked(runCheck).mockResolvedValue(duplicateKeysResult);
+      const ctx = makeCtx();
+
+      await checkCommand(ctx, { verbose: true });
+
+      expect(ctx.output).toContain('API_KEY defined in multiple files');
+      expect(ctx.output).toContain('.env');
+      expect(ctx.output).toContain('.env.local');
+    });
+
+    it('does not show duplicate key warnings in normal mode', async () => {
+      vi.mocked(runCheck).mockResolvedValue(duplicateKeysResult);
+      const ctx = makeCtx();
+
+      await checkCommand(ctx, {});
+
+      expect(ctx.output).not.toContain('defined in multiple files');
+    });
+  });
+
+  // ── Error message detail ──────────────────────────────────────────────
+
+  describe('error message detail', () => {
+    it('shows actionable message for no providers detected', async () => {
+      vi.mocked(runCheck).mockResolvedValue(noProvidersResult);
+      const ctx = makeCtx();
+
+      await checkCommand(ctx, {});
+
+      expect(ctx.errOutput).toContain('No providers detected');
+      expect(ctx.errOutput).toContain('.envguard.json');
+      expect(ctx.errOutput).toContain('envguard config init');
+      expect(ctx.exitCode).toBe(2);
+    });
+
+    it('shows fix hints for failed provider prerequisites', async () => {
+      vi.mocked(runCheck).mockResolvedValue(allProvidersFailedResult);
+      const ctx = makeCtx();
+
+      await checkCommand(ctx, {});
+
+      expect(ctx.errOutput).toContain('prerequisite checks');
+      expect(ctx.errOutput).toContain('gh CLI');
+      expect(ctx.errOutput).toContain('brew install gh');
+      expect(ctx.exitCode).toBe(2);
     });
   });
 });

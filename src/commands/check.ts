@@ -95,11 +95,29 @@ export async function checkCommand(ctx: CliContext, opts: CheckCommandOptions): 
   const availableProviders = result.providers.filter((p) => p.available);
   const unavailableProviders = result.providers.filter((p) => !p.available);
 
+  // No local secrets
+  if (result.localSecrets.length === 0) {
+    if (opts.json) {
+      ctx.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+      return;
+    }
+    if (!opts.quiet) {
+      const envFiles = config?.envFiles;
+      const checked = envFiles?.length
+        ? envFiles.join(', ')
+        : '.env, .env.local, .env.development, .env.production, .env.staging';
+      ctx.stderr.write(
+        `${yellow('⚠')} No secrets found. Checked: ${checked}\n  Create a .env file or update envFiles in .envguard.json.\n`,
+      );
+    }
+    return;
+  }
+
   // Exit code 2: no providers could be checked
   if (result.providers.length === 0) {
     if (!opts.quiet) {
       ctx.stderr.write(
-        `${red('Error:')} No providers detected. Add a .envguard.json config or use a project with GitHub/Vercel/Netlify.\n`,
+        `${red('Error:')} No providers detected.\n  envguard looks for .github/, vercel.json, .vercel/, netlify.toml, or .netlify/ in your project.\n  You can also specify providers in .envguard.json: { "providers": ["github", "vercel"] }\n  Run ${bold('envguard config init')} to create a config file.\n`,
       );
     }
     ctx.exit(2);
@@ -167,6 +185,14 @@ export async function checkCommand(ctx: CliContext, opts: CheckCommandOptions): 
       ctx.stdout.write(
         `  ${formatTarget(remote.provider, remote.target)}: ${remote.keys.length} remote key${remote.keys.length !== 1 ? 's' : ''}\n`,
       );
+    }
+    // Duplicate key warnings
+    if (result.duplicateKeys.length > 0) {
+      for (const dup of result.duplicateKeys) {
+        ctx.stdout.write(
+          `  ${yellow('⚠')} ${dup.key} defined in multiple files: ${dup.sources.join(', ')}\n`,
+        );
+      }
     }
     // Hook status
     const gitRoot = findGitRoot(ctx.cwd());

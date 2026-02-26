@@ -143,6 +143,7 @@ describe('Domain types', () => {
       remoteKeys: [{ provider: 'github', target: 'actions', keys: ['A', 'B'] }],
       providers: [{ provider: 'github', displayName: 'GitHub', available: true }],
       missing: [],
+      duplicateKeys: [],
       allSynced: true,
     };
     expect(result.allSynced).toBe(true);

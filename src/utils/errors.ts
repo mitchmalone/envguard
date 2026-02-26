@@ -22,3 +22,16 @@ export function setupEpipeHandler(ctx: Pick<CliContext, 'stdout' | 'stderr' | 'e
   ctx.stdout.on('error', handleEpipe);
   ctx.stderr.on('error', handleEpipe);
 }
+
+export function setupSignalHandlers(
+  ctx: Pick<CliContext, 'stderr' | 'exit'>,
+  processObj: NodeJS.Process,
+): void {
+  const handler = (signal: string) => {
+    ctx.stderr.write(`\nReceived ${signal}. Exiting gracefully...\n`);
+    ctx.exit(130);
+  };
+
+  processObj.on('SIGINT', () => handler('SIGINT'));
+  processObj.on('SIGTERM', () => handler('SIGTERM'));
+}

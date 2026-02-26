@@ -4,7 +4,7 @@ import { getProvider } from '../providers/registry.js';
 import type { CliContext, MissingSecret, ProviderName, PushResult } from '../types.js';
 import { type PushLoadResult, PushWizard } from '../ui/PushWizard.js';
 import { getProjectRoot, loadConfig } from '../utils/config.js';
-import { bold, configureColors, green, red } from '../utils/terminal.js';
+import { bold, configureColors, green, red, yellow } from '../utils/terminal.js';
 
 export interface PushCommandOptions {
   force?: boolean;
@@ -53,11 +53,28 @@ export async function pushCommand(ctx: CliContext, opts: PushCommandOptions): Pr
 
   const availableProviders = checkResult.providers.filter((p) => p.available);
 
+  // No local secrets
+  if (checkResult.localSecrets.length === 0) {
+    if (opts.json) {
+      ctx.stdout.write(`${JSON.stringify({ pushed: [], allSynced: true })}\n`);
+    } else if (!opts.quiet) {
+      const envFiles = config?.envFiles;
+      const checked = envFiles?.length
+        ? envFiles.join(', ')
+        : '.env, .env.local, .env.development, .env.production, .env.staging';
+      ctx.stderr.write(
+        `${red('Error:')} No secrets found. Checked: ${checked}\n  Create a .env file or update envFiles in .envguard.json.\n`,
+      );
+    }
+    ctx.exit(1);
+    return;
+  }
+
   // No providers
   if (availableProviders.length === 0) {
     if (checkResult.providers.length === 0) {
       ctx.stderr.write(
-        `${red('Error:')} No providers detected. Add a .envguard.json config or use a project with GitHub/Vercel/Netlify.\n`,
+        `${red('Error:')} No providers detected.\n  envguard looks for .github/, vercel.json, .vercel/, netlify.toml, or .netlify/ in your project.\n  You can also specify providers in .envguard.json: { "providers": ["github", "vercel"] }\n  Run ${bold('envguard config init')} to create a config file.\n`,
       );
     } else {
       ctx.stderr.write(`${red('Error:')} All providers failed prerequisite checks:\n`);

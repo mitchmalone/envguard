@@ -263,6 +263,7 @@ describe('PushWizard', () => {
         missingFrom: [{ provider: 'github', target: 'actions' }],
       },
     ],
+    duplicateKeys: [],
     allSynced: false,
   };
 
