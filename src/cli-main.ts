@@ -2,6 +2,7 @@ import { createRequire } from 'node:module';
 import { Command, CommanderError } from 'commander';
 import { checkCommand } from './commands/check.js';
 import { deleteCommand } from './commands/delete.js';
+import { hookInstallCommand, hookRemoveCommand } from './commands/hook.js';
 import { pushCommand } from './commands/push.js';
 import './providers/index.js';
 import type { CliContext } from './types.js';
@@ -90,15 +91,25 @@ export async function runCli(ctx: CliContext): Promise<void> {
   hookCmd
     .command('install')
     .description('install git pre-push hook')
-    .action(() => {
-      ctx.stdout.write('envguard hook install: not yet implemented\n');
+    .option('--force', 'overwrite existing non-envguard hook')
+    .action(async (cmdOpts) => {
+      const globalOpts = program.opts();
+      await hookInstallCommand(ctx, {
+        force: cmdOpts.force,
+        color: globalOpts.color,
+      });
     });
 
   hookCmd
     .command('remove')
     .description('remove git pre-push hook')
-    .action(() => {
-      ctx.stdout.write('envguard hook remove: not yet implemented\n');
+    .option('--force', 'remove even if not an envguard hook')
+    .action(async (cmdOpts) => {
+      const globalOpts = program.opts();
+      await hookRemoveCommand(ctx, {
+        force: cmdOpts.force,
+        color: globalOpts.color,
+      });
     });
 
   const configCmd = program.command('config').description('manage project configuration');

@@ -3,6 +3,7 @@ import type { CliContext, MissingSecret, ProviderName, ProviderStatus } from '..
 import { loadConfig } from '../utils/config.js';
 import { getProjectRoot } from '../utils/config.js';
 import { bold, configureColors, green, red, yellow } from '../utils/terminal.js';
+import { findGitRoot, isHookInstalled } from './hook.js';
 
 export interface CheckCommandOptions {
   json?: boolean;
@@ -167,6 +168,12 @@ export async function checkCommand(ctx: CliContext, opts: CheckCommandOptions): 
         `  ${formatTarget(remote.provider, remote.target)}: ${remote.keys.length} remote key${remote.keys.length !== 1 ? 's' : ''}\n`,
       );
     }
+    // Hook status
+    const gitRoot = findGitRoot(ctx.cwd());
+    if (gitRoot) {
+      const hookStatus = isHookInstalled(gitRoot) ? green('installed') : yellow('not installed');
+      ctx.stdout.write(`  Pre-push hook: ${hookStatus}\n`);
+    }
     // Timing
     ctx.stdout.write(`  Completed in ${elapsed.toFixed(0)}ms\n`);
   }
@@ -193,6 +200,14 @@ export async function checkCommand(ctx: CliContext, opts: CheckCommandOptions): 
 
     ctx.stdout.write('\n');
     ctx.stdout.write(`  Run ${bold('envguard push')} to sync them.\n`);
+
+    // Suggest hook install if no hook is present
+    const gitRoot = findGitRoot(ctx.cwd());
+    if (gitRoot && !isHookInstalled(gitRoot)) {
+      ctx.stdout.write(
+        `  Run ${bold('envguard hook install')} to catch missing secrets before pushing.\n`,
+      );
+    }
   }
 
   ctx.stdout.write('\n');

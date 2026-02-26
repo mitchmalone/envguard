@@ -6,7 +6,16 @@ import type { CheckResult, CliContext } from '../src/types.js';
 // Mock the comparator module
 vi.mock('../src/core/comparator.js');
 vi.mock('../src/utils/config.js');
+vi.mock('../src/commands/hook.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../src/commands/hook.js')>();
+  return {
+    ...original,
+    findGitRoot: vi.fn(),
+    isHookInstalled: vi.fn(),
+  };
+});
 
+import { findGitRoot, isHookInstalled } from '../src/commands/hook.js';
 import { runCheck } from '../src/core/comparator.js';
 import { getProjectRoot, loadConfig } from '../src/utils/config.js';
 
@@ -131,6 +140,8 @@ describe('checkCommand', () => {
   beforeEach(() => {
     vi.mocked(getProjectRoot).mockReturnValue('/fake/project');
     vi.mocked(loadConfig).mockReturnValue(null);
+    vi.mocked(findGitRoot).mockReturnValue(null);
+    vi.mocked(isHookInstalled).mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -352,6 +363,64 @@ describe('checkCommand', () => {
 
       expect(ctx.output).toContain('GitHub prerequisites: ok');
       expect(ctx.output).toContain('Vercel prerequisites: failed');
+    });
+
+    it('shows hook status as installed in verbose mode', async () => {
+      vi.mocked(runCheck).mockResolvedValue(allSyncedResult);
+      vi.mocked(findGitRoot).mockReturnValue('/fake/project');
+      vi.mocked(isHookInstalled).mockReturnValue(true);
+      const ctx = makeCtx();
+
+      await checkCommand(ctx, { verbose: true });
+
+      expect(ctx.output).toContain('Pre-push hook: installed');
+    });
+
+    it('shows hook status as not installed in verbose mode', async () => {
+      vi.mocked(runCheck).mockResolvedValue(allSyncedResult);
+      vi.mocked(findGitRoot).mockReturnValue('/fake/project');
+      vi.mocked(isHookInstalled).mockReturnValue(false);
+      const ctx = makeCtx();
+
+      await checkCommand(ctx, { verbose: true });
+
+      expect(ctx.output).toContain('Pre-push hook: not installed');
+    });
+  });
+
+  // ── Hook suggestion ──────────────────────────────────────────────────
+
+  describe('hook suggestion', () => {
+    it('suggests hook install when secrets missing and no hook', async () => {
+      vi.mocked(runCheck).mockResolvedValue(missingResult);
+      vi.mocked(findGitRoot).mockReturnValue('/fake/project');
+      vi.mocked(isHookInstalled).mockReturnValue(false);
+      const ctx = makeCtx();
+
+      await checkCommand(ctx, {});
+
+      expect(ctx.output).toContain('envguard hook install');
+    });
+
+    it('does not suggest hook install when hook is already installed', async () => {
+      vi.mocked(runCheck).mockResolvedValue(missingResult);
+      vi.mocked(findGitRoot).mockReturnValue('/fake/project');
+      vi.mocked(isHookInstalled).mockReturnValue(true);
+      const ctx = makeCtx();
+
+      await checkCommand(ctx, {});
+
+      expect(ctx.output).not.toContain('envguard hook install');
+    });
+
+    it('does not suggest hook install when not in a git repo', async () => {
+      vi.mocked(runCheck).mockResolvedValue(missingResult);
+      vi.mocked(findGitRoot).mockReturnValue(null);
+      const ctx = makeCtx();
+
+      await checkCommand(ctx, {});
+
+      expect(ctx.output).not.toContain('envguard hook install');
     });
   });
 });
