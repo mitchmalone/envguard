@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import { Command, CommanderError } from 'commander';
 import { checkCommand } from './commands/check.js';
+import { configInitCommand, configShowCommand } from './commands/config.js';
 import { deleteCommand } from './commands/delete.js';
 import { hookInstallCommand, hookRemoveCommand } from './commands/hook.js';
 import { pushCommand } from './commands/push.js';
@@ -117,15 +118,24 @@ export async function runCli(ctx: CliContext): Promise<void> {
   configCmd
     .command('show', { isDefault: true })
     .description('show current configuration')
-    .action(() => {
-      ctx.stdout.write('envguard config: not yet implemented\n');
+    .action(async () => {
+      const globalOpts = program.opts();
+      await configShowCommand(ctx, {
+        json: globalOpts.json,
+        quiet: globalOpts.quiet,
+        verbose: globalOpts.verbose,
+        color: globalOpts.color,
+      });
     });
 
   configCmd
     .command('init')
     .description('create .envguard.json interactively')
-    .action(() => {
-      ctx.stdout.write('envguard config init: not yet implemented\n');
+    .action(async () => {
+      const globalOpts = program.opts();
+      await configInitCommand(ctx, {
+        color: globalOpts.color,
+      });
     });
 
   try {
