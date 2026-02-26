@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import { Command, CommanderError } from 'commander';
 import { checkCommand } from './commands/check.js';
+import { pushCommand } from './commands/push.js';
 import './providers/index.js';
 import type { CliContext } from './types.js';
 import { CliError, setupEpipeHandler } from './utils/errors.js';
@@ -44,8 +45,18 @@ export async function runCli(ctx: CliContext): Promise<void> {
   program
     .command('push')
     .description('interactive push secrets to remote providers')
-    .action(() => {
-      ctx.stdout.write('envguard push: not yet implemented\n');
+    .option('--force', 'skip confirmation, push all missing secrets')
+    .option('--dry-run', 'show what would be pushed without pushing')
+    .action(async (cmdOpts) => {
+      const globalOpts = program.opts();
+      await pushCommand(ctx, {
+        force: cmdOpts.force,
+        dryRun: cmdOpts.dryRun,
+        json: globalOpts.json,
+        quiet: globalOpts.quiet,
+        verbose: globalOpts.verbose,
+        color: globalOpts.color,
+      });
     });
 
   program
